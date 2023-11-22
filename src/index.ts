@@ -113,3 +113,16 @@ async function getArrestsAfterOctoberSeventh(): Promise<Prisoner[]> {
   );
 }
 
+async function getPercentages<T extends keyof Prisoner>(field: T): Promise<Record<Prisoner[T], number>> {
+  const prisoners = await collectAllPrisoners();
+
+  const counts = prisoners.reduce((acc, prisoner) => {
+    const key = prisoner[field];
+    acc[key] = (acc[key] ?? 0) + 1;
+    return acc;
+  }, {} as Record<Prisoner[T], number>);
+
+  const total = prisoners.length;
+  return Object.keys(counts).reduce((acc, key) => ({ ...acc, [key]: (counts[key as Prisoner[T]] ?? 0) / total * 100}), {} as Record<Prisoner[T], number>)
+}
+
