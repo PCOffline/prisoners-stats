@@ -94,11 +94,11 @@ async function analyseFieldsOfInterest<T extends keyof Prisoner>(
   }, {} as MapOfInterests<T>);
 }
 
-async function getArrestsAfterOctoberSeventh(): Promise<Prisoner[]> {
+async function getArrestsAfterDate(date: Date): Promise<Prisoner[]> {
   const prisoners = await collectAllPrisoners();
 
   return prisoners.filter(
-    ({ arrest_date }) => new Date(arrest_date) > new Date('2023-10-07'),
+    ({ arrest_date }) => new Date(arrest_date) >= date,
   );
 }
 
