@@ -134,3 +134,72 @@ async function getPercentages<T extends keyof Prisoner>(
   );
 }
 
+async function getCorrelation<T extends keyof Prisoner, U extends keyof Prisoner>(
+  firstField: T,
+  secondField: U
+): Promise<number> {
+  const prisoners = await collectAllPrisoners();
+  // Create a map of unique values in the first field to numeric identifiers
+  const uniqueValuesFirstField = Array.from(
+    new Set(prisoners.map((prisoner) => prisoner[firstField])),
+  );
+  const valueToNumberFirstField = new Map(
+    uniqueValuesFirstField.map((value, index) => [value, index + 1]),
+  );
+
+  // Create a map of unique values in the second field to numeric identifiers
+  const uniqueValuesSecondField = Array.from(
+    new Set(prisoners.map((prisoner) => prisoner[secondField])),
+  );
+  const valueToNumberSecondField = new Map(
+    uniqueValuesSecondField.map((value, index) => [value, index + 1]),
+  );
+
+  // Convert categorical fields to numerical
+  const convertedPrisoners = prisoners.map((prisoner) => ({
+    [firstField]: valueToNumberFirstField.get(prisoner[firstField]),
+    [secondField]: valueToNumberSecondField.get(prisoner[secondField]),
+  })) as Record<T | U, number>[];
+
+  // Calculate the means of the two fields
+  const meanFirstField =
+    convertedPrisoners.reduce(
+      (total, prisoner) => total + prisoner[firstField],
+      0,
+    ) / convertedPrisoners.length;
+  const meanSecondField =
+    convertedPrisoners.reduce(
+      (total, prisoner) => total + prisoner[secondField],
+      0,
+    ) / convertedPrisoners.length;
+
+  // Calculate the standard deviations of the two fields
+  const stdDevFirstField = Math.sqrt(
+    convertedPrisoners.reduce(
+      (total, prisoner) =>
+        total + Math.pow(prisoner[firstField] - meanFirstField, 2),
+      0,
+    ) / convertedPrisoners.length,
+  );
+  const stdDevSecondField = Math.sqrt(
+    convertedPrisoners.reduce(
+      (total, prisoner) =>
+        total + Math.pow(prisoner[secondField] - meanSecondField, 2),
+      0,
+    ) / convertedPrisoners.length,
+  );
+
+  // Calculate the correlation coefficient
+
+  return (
+    convertedPrisoners.reduce(
+      (total, prisoner) =>
+        total +
+        (prisoner[firstField] - meanFirstField) *
+          (prisoner[secondField] - meanSecondField),
+      0,
+    ) /
+    (convertedPrisoners.length * stdDevFirstField * stdDevSecondField)
+  );
+}
+
