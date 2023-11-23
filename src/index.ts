@@ -73,36 +73,25 @@ async function collectAllPrisoners(): Promise<Prisoner[]> {
   return prisoners;
 }
 
-type MapOfInterests = {
-  [Key in
-    | 'organization'
-    | 'id_type'
-    | 'ciztizenship'
-    | 'court'
-    | 'gender'
-    | 'type']: Set<Prisoner[Key]>;
+type MapOfInterests<T extends keyof Prisoner = keyof Prisoner> = {
+  [Key in T]: Set<Prisoner[Key]>;
 };
 
-async function analyseFieldsOfInterest(): Promise<MapOfInterests> {
-  const prisoners = await collectAllPrisoners();
+// Recommended fields: ['organization','id_type', 'ciztizenship', 'court', 'gender', 'type']
 
-  const fieldsOfInterest = [
-    'organization',
-    'id_type',
-    'ciztizenship',
-    'court',
-    'gender',
-    'type',
-  ] as const satisfies ReadonlyArray<keyof Prisoner>;
+async function analyseFieldsOfInterest<T extends keyof Prisoner>(
+  fieldsOfInterest: Array<T>,
+): Promise<MapOfInterests<T>> {
+  const prisoners = await collectAllPrisoners();
 
   return prisoners.reduce((acc, prisoner) => {
     fieldsOfInterest.forEach((field) =>
       acc[field]
         ? acc[field].add(prisoner[field] as never)
-        : (acc[field] = new Set([prisoner[field]]) as any),
+        : (acc[field] = new Set([prisoner[field]])),
     );
     return acc;
-  }, {} as MapOfInterests);
+  }, {} as MapOfInterests<T>);
 }
 
 async function getArrestsAfterOctoberSeventh(): Promise<Prisoner[]> {
@@ -134,10 +123,10 @@ async function getPercentages<T extends keyof Prisoner>(
   );
 }
 
-async function getCorrelation<T extends keyof Prisoner, U extends keyof Prisoner>(
-  firstField: T,
-  secondField: U
-): Promise<number> {
+async function getCorrelation<
+  T extends keyof Prisoner,
+  U extends keyof Prisoner,
+>(firstField: T, secondField: U): Promise<number> {
   const prisoners = await collectAllPrisoners();
   // Create a map of unique values in the first field to numeric identifiers
   const uniqueValuesFirstField = Array.from(
